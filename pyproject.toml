@@ -1,0 +1,76 @@
+[tool.poetry]
+name = "service-base"
+version = "0.1.0"
+description = ""
+authors = ["Samir Seth <samirkseth@gmail.com>"]
+readme = "README.md"
+packages = [
+    { include = "sarvam_datastore" }
+]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4"
+google-cloud-datastore = { version = "^2.18.0" }
+pydantic = "^2.3.0"
+pydantic-settings = "^2.0.3"
+proto-google-cloud-datastore-v1 = { version = "^0.90.4" }
+
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.1.1"
+black = "^23.1.0"
+poethepoet = "^0.19.0"
+types-protobuf = "^4.22.0.0"
+types-pytz = "^2023.3.0.0"
+types-cachetools = "^5.3.0.5"
+pytest = "^7.3.0"
+pytest-asyncio = "^0.21.0"
+types-aiofiles = "^23.1.0.1"
+pdoc3 = "^0.10.0"
+flake8 = "^6.0.0"
+faker = "^19.6.2"
+faker-enum = "^0.0.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+python_version = "3.11"
+
+
+[tool.poe.tasks.compose]
+shell = """
+docker-compose $@
+"""
+interpreter = "bash"
+cwd = "./tools"
+help = "start docker containers (on dev machine) for prometheus, loki, tempo, grafana, redis"
+
+
+[tool.poe.tasks.docs]
+shell = """
+rm -rf docs
+
+pdoc service_base/api -o docs
+pdoc service_base/model -o docs
+pdoc service_base/datastore -o docs
+pdoc service_base/storage -o docs
+"""
+interpreter = "bash"
+help = "generate documentation"
+
+[tool.poe.tasks.lint]
+shell = """
+black service_base tests
+flake8 service_base tests
+mypy service_base tests
+"""
+interpreter = "bash"
+help = "format, lint, typecheck"
+
+
+[tool.poe.tasks.test]
+cmd = "python -m pytest -vv -o log_cli=1 -o log_cli_level=INFO -W 'ignore::DeprecationWarning' $FILE"
+args = [{name="FILE", default="tests", positional=true}]
+help = "run tests using pytest"
